@@ -1,6 +1,10 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
+#if UNITYDYNAMICSCROLLRECT_ZENJECT
+using Zenject;
+#endif
+
 namespace pooling
 {
     public class Pooling<T> : List<T> where T : MonoBehaviour, IPooling
@@ -10,6 +14,10 @@ namespace pooling
         private Transform mParent;
         private Vector3 mStartPos;
         private GameObject referenceObject;
+
+#if UNITYDYNAMICSCROLLRECT_ZENJECT
+        [Inject] IInstantiator instantiator;
+#endif
 
         public delegate void ObjectCreationCallback(T obj);
         public event ObjectCreationCallback OnObjectCreationCallBack;
@@ -79,8 +87,12 @@ namespace pooling
 
         private T CreateObject(Transform parent = null, Vector3? position = null)
         {
+#if UNITYDYNAMICSCROLLRECT_ZENJECT
+            var obj = instantiator.InstantiatePrefabForComponent<T>(referenceObject, position ?? mStartPos, Quaternion.identity, parent ?? mParent);
+#else
             var go = GameObject.Instantiate(referenceObject, position ?? mStartPos, Quaternion.identity, parent ?? mParent);
             var obj = go.GetComponent<T>() ?? go.AddComponent<T>();
+#endif
             obj.transform.localPosition = position ?? mStartPos;
             obj.name = obj.objectName + Count;
 
